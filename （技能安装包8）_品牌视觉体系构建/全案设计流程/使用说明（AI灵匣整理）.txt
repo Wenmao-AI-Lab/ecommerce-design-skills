@@ -1,0 +1,325 @@
+【所属分类】08_品牌视觉体系构建
+【技能名称】全案设计流程
+【技能标识】design
+【功能描述】综合设计技能：品牌识别、设计令牌、UI 样式、Logo 生成（55 种风格，Gemini / Atlas Cloud / MuAPI AI）、企业视觉规范（50 项交付物 + CIP 样机）、HTML 演示（Chart.js）、Banner 设计（22 种风格，社媒/广告/网页/印刷）、图标设计（15 种风格，SVG，Gemini 3.1 Pro）、社媒图（HTML→截图，多平台）。触发：设计 logo、做 CIP、生成样机、做演示、设计 banner、生成图标、做社媒图、品牌识别、设计系统。覆盖平台：Facebook、Twitter、LinkedIn、YouTube、Instagram、Pinterest、TikTok、Google Ads。
+
+【详细概述】
+
+
+
+# 全案设计流程
+
+> 一个技能装下品牌侧全案：Logo → 企业视觉规范（CIP）→ 演示 → Banner → 图标 → 社媒图，靠路由表自动分派。
+
+## 这个技能能做什么
+
+它是**品牌侧的「总入口 + 路由表」**：你不用记六个技能怎么调，它按你的任务自动分派到对应子能力。
+
+**九条分派路由（SKILL.md 原文表格）：**
+
+| 你的任务 | 走哪条 |
+|---|---|
+| 品牌识别、品牌调性、品牌资产 | `brand`（同级子技能） |
+| 令牌、规范、CSS 变量 | `design-system`（同级子技能） |
+| shadcn/ui、Tailwind、代码 | `ui-styling`（同级子技能） |
+| Logo 创作与 AI 生成 | 内建 · `references/logo-design.md` |
+| CIP 样机与交付物 | 内建 · `references/cip-design.md` |
+| 演示、路演稿 | 内建 · `references/slides.md` |
+| Banner、封面、头图 | 内建 · `references/banner-sizes-and-styles.md` |
+| 社媒图 | 内建 · `references/social-photos-design.md` |
+| SVG 图标、图标集 | 内建 · `references/icon-design.md` |
+
+**六个内建能力的规模（全部来自 SKILL.md 原文）：**
+
+| 能力 | 规模 |
+|---|---|
+| Logo | **55+ 风格 / 30 套配色 / 25 份行业指南** |
+| CIP 企业视觉规范 | **50 项交付物** + 样机 |
+| 演示（Slides） | 用 `references/slides-html-template.md` 出 HTML |
+| Banner | 22 种风格，社媒 / 广告 / 网页 / 印刷 |
+| 图标 | 15 种风格，出 SVG |
+| 社媒图 | HTML → 截图，多平台 |
+
+**两条现成工作流**（SKILL.md 的 `Workflows` 一节原样）：
+- **完整品牌包**：Logo（生成变体）→ CIP（`generate.py --logo ...` 出交付物样机）→ 演示（加载 `slides-create.md` 做路演稿）
+- **新建设计系统**：品牌（定义色、字、语气）→ 令牌（建语义令牌层）→ 落地（配 Tailwind / shadcn-ui）
+
+**脚本路径有个坑，SKILL.md 专门写了**：`scripts/<file>` 指的是**技能自己目录下的** `scripts/`，`../<skill>/scripts/<file>` 才是同级子技能的；工作目录保持在项目根（脚本默认读写成 `docs/`、`assets/`、`src/` 这类项目文件）。
+
+## 什么时候用它
+
+- 要一次做出整套品牌物料，不想在每个平台重画一遍
+- 需要 Logo 多方向方案，或企业视觉规范（CIP）样机
+- 要把配色、字阶、组件写成规范文档交给别人执行
+- 要做一份品牌调性统一的路演稿 / 演示
+- 要一整套图标（SVG）、一整套社媒图（多平台尺寸）
+
+**它的边界**：只管品牌侧的设计产出，不做视频剪辑、不做整站开发、不做印刷生产。
+
+**同包内怎么选**：
+- 只要**令牌与组件规范**（不要 Logo/CIP/演示）→ 用「设计令牌与组件规范」更聚焦
+- 只要 **Banner**（不要整套品牌）→ 用「Banner 与社媒配图设计」
+- 只要**海报 / KV / 活动图**（要母版能重出图的）→ 用「营销图形母版与多尺寸套件」
+- 不知道定什么调性，想先拿方向 → 用「设计咨询与风格定调」
+
+## 需要准备什么
+
+| 材料 | 说明 | 必需 |
+|---|---|---|
+| 品牌名 | 中英文都行，Logo/CIP 生成要 | 是 |
+| 行业 / 定位 | 选风格与配色要用 | 是 |
+| 已有 Logo 文件 | 出 CIP 样机时强烈建议给（不带 logo 效果差一截） | 否 |
+| 品牌色与字体 | 有就给，没有它按行业推荐 | 否 |
+
+**环境与密钥（SKILL.md 的 `Setup` 一节原文）：**
+
+```bash
+export GEMINI_API_KEY="your-key"     # https://aistudio.google.com/apikey
+pip install google-genai pillow
+
+# 可选的 MuAPI 通道（不需要额外 Python 包）
+export MUAPI_API_KEY="your-key"
+```
+
+**Windows 注意事项（原文）**：用 `python` 而不是 `python3`（如 `python scripts/logo/search.py`）；需要装包时用 `python -m pip install ...`。
+
+**只查不生成时不需要密钥**：`search.py` 系列（检索风格 / 配色 / 行业）是本地 BM25 检索，不联网、不花钱。**只有 `generate.py`（Logo / CIP / 图标）才需要 key。**
+
+## 操作步骤
+
+### 第 1 步：先检索，别直接生成
+
+```bash
+# Logo：生成设计简报
+python scripts/logo/search.py "tech startup modern" --design-brief -p "BrandName"
+
+# 按域检索：风格 / 配色 / 行业
+python scripts/logo/search.py "minimalist clean" --domain style
+python scripts/logo/search.py "tech professional" --domain color
+python scripts/logo/search.py "healthcare medical" --domain industry
+```
+
+### 第 2 步：出 Logo
+
+```bash
+python scripts/logo/generate.py --brand "TechFlow" --style minimalist --industry tech
+python scripts/logo/generate.py --prompt "coffee shop vintage badge" --style vintage
+python scripts/logo/generate.py --brand "TechFlow" --provider atlas
+python scripts/logo/generate.py --brand "TechFlow" --provider muapi --muapi-model nano-banana-pro
+```
+
+### 第 3 步：出 CIP 企业视觉规范样机
+
+```bash
+# 先检索
+python scripts/cip/search.py "tech startup" --cip-brief -b "BrandName"
+python scripts/cip/search.py "business card letterhead" --domain deliverable
+python scripts/cip/search.py "luxury premium elegant" --domain style
+python scripts/cip/search.py "hospitality hotel" --domain industry
+python scripts/cip/search.py "office reception" --domain mockup
+
+# 再生成（带 logo 效果最好）
+python scripts/cip/generate.py --brand "TopGroup" --logo /path/to/logo.png --deliverable "business card" --industry "consulting"
+python scripts/cip/generate.py --brand "TopGroup" --logo /path/to/logo.png --industry "consulting" --set
+python scripts/cip/generate.py --brand "TopGroup" --logo logo.png --deliverable "business card" --model pro
+python scripts/cip/generate.py --brand "TechFlow" --deliverable "business card" --no-logo-prompt
+
+# 汇总成 HTML 提案
+python scripts/cip/render-html.py --brand "TopGroup" --industry "consulting" --images /path/to/cip-output
+```
+
+### 第 4 步：出图标
+
+```bash
+python scripts/icon/generate.py --prompt "settings gear" --style outlined
+python scripts/icon/generate.py --prompt "shopping cart" --style filled --color "#6366F1"
+python scripts/icon/generate.py --name "dashboard" --category navigation --style duotone
+python scripts/icon/generate.py --prompt "cloud upload" --batch 4 --output-dir ./icons
+python scripts/icon/generate.py --prompt "user profile" --sizes "16,24,32,48" --output-dir ./icons
+```
+
+### 第 5 步：演示 / Banner / 社媒图
+
+这三块**不靠命令行**，按 SKILL.md 的指引加载对应 `references/` 文档后按流程产出（演示模板在 `references/slides-html-template.md`，Banner 尺寸与风格在 `references/banner-sizes-and-styles.md`，社媒图在 `references/social-photos-design.md`）。
+
+## 命令速查
+
+**Logo 检索 `scripts/logo/search.py`**
+
+| 参数 | 说明 |
+|---|---|
+| 位置参数 | 检索词，如 `"tech startup modern"` |
+| `--design-brief` | 输出完整设计简报（不是零散结果） |
+| `-p` / `--project` | 品牌名 |
+| `--domain` | `style` / `color` / `industry` |
+
+**Logo 生成 `scripts/logo/generate.py`**
+
+| 参数 | 说明 |
+|---|---|
+| `--brand` | 品牌名 |
+| `--prompt` | 自由描述（与 `--brand` 二选一） |
+| `--style` | 风格，如 `minimalist` / `vintage` |
+| `--industry` | 行业 |
+| `--provider` | 生成通道：默认 Gemini / `atlas` / `muapi` |
+| `--muapi-model` | 走 muapi 时的模型，如 `nano-banana-pro` |
+
+**CIP 检索 / 生成**
+
+| 命令 | 参数 |
+|---|---|
+| `cip/search.py` | `--cip-brief`、`-b <品牌名>`、`--domain deliverable` 或 `style` 或 `industry` 或 `mockup` |
+| `cip/generate.py` | `--brand`、`--logo`、`--deliverable`、`--industry`、`--set`（整组）、`--model pro`、`--no-logo-prompt` |
+| `cip/render-html.py` | `--brand`、`--industry`、`--images <CIP 产物目录>` |
+
+**图标 `scripts/icon/generate.py`**
+
+| 参数 | 说明 |
+|---|---|
+| `--prompt` / `--name` | 图标描述或名称 |
+| `--style` | `outlined` / `filled` / `duotone` 等 15 种 |
+| `--color` | 主色，如 `#6366F1` |
+| `--category` | 分类，如 `navigation` |
+| `--batch N` | 一次出 N 个变体 |
+| `--sizes "16,24,32,48"` | 多尺寸导出 |
+| `--output-dir` | 输出目录 |
+
+## 你会拿到什么
+
+- **Logo**：多方向 Logo 图形文件 + 设计简报（风格 / 配色 / 行业依据）
+- **CIP**：一组企业视觉规范样机（名片、信纸、办公环境等，`--set` 出整组）+ 一份 HTML 提案
+- **图标**：SVG 图标，可批量变体、可多尺寸导出
+- **演示**：品牌调性统一的 HTML 演示稿
+- **Banner / 社媒图**：按目标平台尺寸的成品图
+- **规范类**：`docs/brand-guidelines.md`、`assets/design-tokens.json` 这类可直接交给别人执行的项目文件
+
+## 完整对话案例
+
+### 本包实测：这条线上真正跑过的是哪两段
+
+诚实说明——**本包的全流程实测（轻奢陶瓷马克杯）用的是米色「晨白」体系，不是走这个技能整套生成**，但它线上有两个能力是**真跑通并留下了产物**的：
+
+**① 企业视觉规范 / 设计令牌这一段（走的是它的同级子技能 `design-system`）**，产物原文如下：
+
+```
+## Design System: Yutao Chenbai
+### Pattern
+- Name: Feature-Rich Showcase
+- CTA Placement: Above fold
+- Sections: Hero > Features > CTA
+### Style
+- Name: Liquid Glass
+- Best For: Premium SaaS, high-end e-commerce, creative platforms,
+  branding experiences, luxury portfolios
+- Performance: ⚠ Moderate-Poor | Accessibility: ⚠ Text contrast
+### Colors
+| Role | Hex |
+| Primary | #1C1917 |
+| Secondary | #44403C |
+| CTA | #CA8A04 |
+| Background | #FAFAF9 |
+| Text | #0C0A09 |
+### Typography
+- Heading: Cormorant   Body: Montserrat
+- Mood: luxury, high-end, fashion, elegant, refined, premium
+```
+
+**这里必须如实说一句**：技能给出的风格方向是 `Liquid Glass`（流动玻璃、动效重），而它自己就标了 `⚠ Moderate-Poor`（性能）与 `⚠ Text contrast`（可访问性）两条风险。**实测的最终交付没有照抄这个方向**——落地的是一套米色纸面 + 描金的中式静物体系，因为陶瓷礼品的受众与「玻璃拟态」不搭。技能给的是**有出处的候选方向**，最终取舍仍然是人做的。
+
+**② Logo 设计简报这一段**，产物原文：
+
+```
+============================================================
+  LOGO DESIGN BRIEF: YUTAO
+============================================================
+  Query: luxury black gold ceramic lifestyle brand
+## INDUSTRY ANALYSIS
+**Industry:** Fashion
+- Recommended Styles: Wordmark Luxury Monogram Line Art
+- Colors: #000000 #FFFFFF #D4AF37
+- Typography: Elegant serif or thin sans
+- Mood: Sophisticated elegant modern
+- Best Practices: Minimal timeless refined
+- Avoid: Trendy effects dated fonts
+## COLOR PALETTE OPTIONS
+**Luxury Gold**
+- Primary: #1C1917   Secondary: #44403C
+- Accent: #D4AF37    Background: #FAFAF9
+- Psychology: Luxury prestige exclusivity wealth
+```
+
+**结论**：`search.py` 这一段（不花钱、不联网）产出的行业分析与配色候选**可直接当作提案素材**；`generate.py` 那一段（要 API key）本包**没有实际跑过**，所以本说明书不为它背书效果。
+
+## 常见问题 FAQ
+
+**Q1：一定要 API key 吗？**
+A：**检索不用，生成才用。** `scripts/logo/search.py`、`cip/search.py` 是本地 BM25 检索，不联网不花钱。只有 `generate.py`（Logo / CIP / 图标）需要 `GEMINI_API_KEY`（或可选的 `MUAPI_API_KEY`）。
+
+**Q2：报「google-genai 找不到」？**
+A：`pip install google-genai pillow`。Windows 上用 `python -m pip install google-genai pillow`。
+
+**Q3：在 Windows 上按文档敲 `python3` 没反应？**
+A：SKILL.md 明确写了：**Windows 用 `python`**。
+
+**Q4：跑脚本报找不到 `references/xxx.md`？**
+A：脚本路径是**相对于 SKILL.md 所在目录**的，不是相对于你当前项目目录。先把技能目录拼全，或切到技能目录再跑。
+
+**Q5：`brand` / `ui-styling` 这两个同级子技能在哪？**
+A：**本包没有提供**。`design` 的路由表把它们列为「bundled sibling skill」，但本包只装 `design` 与 `design-system`。品牌识别与 UI 代码落地这两段要另找技能；`design-system` 这一段在本包里是有的，直接用它。
+
+**Q6：图标能出 SVG 吗？**
+A：能。图标能力的定位就是「15 种风格，出 SVG」，`--sizes "16,24,32,48"` 可一次多尺寸导出。
+
+**Q7：CIP 的 `--set` 是什么？**
+A：出一整组交付物（不是单件）。单件用 `--deliverable "business card"` 指定。
+
+**Q8：不给 logo 出 CIP 行不行？**
+A：行，用 `--no-logo-prompt`。但带 logo 的样机明显更像真的，SKILL.md 把带 logo 的方案标了「RECOMMENDED」。
+
+## 注意
+
+- **需要 API key 才能生成**：`export GEMINI_API_KEY="..."`（申请地址 https://aistudio.google.com/apikey）+ `pip install google-genai pillow`；可选的 `MUAPI_API_KEY` 走另一条通道。**只做检索不需要 key。**
+- **Windows 用 `python` 而不是 `python3`**；装包用 `python -m pip install ...`。
+- **脚本路径相对于 SKILL.md 所在目录，不是相对于项目目录**：`scripts/<file>` 是技能自己的，`../<skill>/scripts/<file>` 是同级子技能的。工作目录保持在项目根，脚本默认读写 `docs/brand-guidelines.md`、`assets/design-tokens.json`、`src/` 这类项目文件。
+- **本包未提供 `brand` 与 `ui-styling` 两个同级子技能**（SKILL.md 的路由表把它们列为 bundled sibling），所以「品牌识别」与「UI 代码落地」两段在本包里不可用；`design-system` 这一段**有**，它是本包的另一项技能。
+- **边界**：只管品牌侧设计产出，不做视频剪辑、不做整站开发、不做印刷生产。
+- **风格方向是候选不是结论**：实测中技能推荐的 `Liquid Glass` 自带 `⚠ Moderate-Poor`（性能）与 `⚠ Text contrast`（可访问性）两条风险标注，最终交付没有采用。拿到推荐方向后请自己按受众与品类复核一次。
+- 本技能作者标注为 `claudekit`（frontmatter `metadata.author`），版本 `2.1.0`，`license: MIT`。
+- 本技能没有 `EASEL-META.md`：它是从公共开源仓库整包收录的，来源与许可记录在技能自带 frontmatter 里，不额外补写元数据文件。
+
+## 修复记录
+
+- **本包未改动技能本体。** zip 内 36 个文件（`SKILL.md`、`data/` 9 份 CSV、`references/` 18 份、`scripts/` 9 个脚本，含一份测试）与本机实测所用安装版本**逐文件 MD5 一致**。
+- **来源与许可已逐条核实（可查）**：上游仓库 `nextlevelbuilder/ui-ux-pro-max-skill`（作者 `nextlevelbuilder`，仓库星标 **128,379**），技能内 frontmatter 明写 `license: MIT`，商用与二次分发可用。收录路径 `.claude/skills/design`，记录在 `_art2/_fills/all_manifest.json`。
+- **一条边界已在说明书里明说、不藏**：SKILL.md 的「Sub-skill Routing」把 `brand` 与 `ui-styling` 列为 bundled sibling skill，但**本包只提供 `design` 与 `design-system`**，这两个子技能没有随包提供。买家按路由表去找会扑空，所以本说明书写进 FAQ 与「注意」。
+- **一条实测观察已如实记录**：本包实测中调用了它的同级子技能 `design-system`，产出的设计系统提案里风格方向 `Liquid Glass` 自带 `⚠ Moderate-Poor` 与 `⚠ Text contrast` 两条风险标注，**最终交付没有采用该方向**。这属于正常现象（技能给候选、人做取舍），但把风险标注一并写明，比只摘「推荐了什么」更负责。
+- **未背书的部分也写明**：`generate.py` 系列（Logo / CIP / 图标）需要 `GEMINI_API_KEY`，本包全流程**没有实际调用过**，因此本说明书只列真实参数，不宣称生成效果。
+
+━━━━━━━━━━━━━━━━━━━━━━━━ 淘宝店AI灵匣 ━━━━━━━━━━━━━━━━━━━━━━━━
+  安装：把本技能文件夹（或解压 zip）放入智能体的技能目录即可被识别。
+  用法：把需求直接说给智能体，提到相关触发词时会自动调用本技能。
+  售后：淘宝店「AI灵匣」，有问题随时联系客服。
+━━━━━━━━━━━━━━━━━━━━━━━━ 淘宝店AI灵匣 ━━━━━━━━━━━━━━━━━━━━━━━━
+【安装方式】（把 ZIP 拖进对话框，发一句话就装好）
+
+  第 1 步｜上传
+      把本文件夹里的 design.zip 直接拖进 AI 对话框（和发图片一样），
+      不用解压、不用找文件夹、不用装任何软件。
+
+  第 2 步｜复制下面这句话，粘贴发送
+
+      「请解压并安装这个技能包：全案设计流程。
+       装好后告诉我安装结果，以及之后怎么调用它。」
+
+  第 3 步｜收到「安装完成」就能用了
+      直接说「使用全案设计流程」，或者干脆直接描述你的需求。
+
+  · 一次装多个：把多个 zip 一起拖进对话框，再发
+    「请把上面这些技能包全部解压安装」。
+  · 不限定哪个 AI：只要你的 AI 支持上传文件、能读写自己的
+    技能目录就能用，不绑定平台或品牌。它要是说不会装，补一句：
+    「把技能包解压后放进你的技能目录，SKILL.md 在第一层即可」。
+  · 装好后不联网也能用；带脚本的技能需要本机有 Python 3.8+。
+
+━━━━━
+

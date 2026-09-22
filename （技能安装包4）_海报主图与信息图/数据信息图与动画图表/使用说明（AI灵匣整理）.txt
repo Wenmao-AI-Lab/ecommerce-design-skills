@@ -1,0 +1,207 @@
+【所属分类】04_海报主图与信息图
+【技能名称】数据信息图与动画图表
+【技能标识】infographic
+【功能描述】把数据或文字内容转成可视化信息图，两种输出模式：静态 AntV 信息图（列表 / 流程 / 对比 / 层级，矢量可导 SVG）与动画 GIF 图表（条形竞赛 / 数字滚动 / 进度 / 折线生长，直接产出可发社媒的动图）。触发词：做信息图、数据可视化、流程图、对比图、动画图表、GIF 图表、思维导图、SWOT 分析图。
+
+【详细概述】
+
+
+
+# 数据信息图与动画图表
+
+> 静态走 AntV 矢量渲染，动画走自研 matplotlib 逐帧脚本——两种产物都是本地出的，不依赖在线服务。
+
+## 这个技能能做什么
+
+两种模式，按用途分：
+
+**模式 A：静态信息图（AntV Infographic DSL）**
+列表、流程、对比、层级、关系图等 50+ 模板，矢量渲染，可导出 SVG。产物是 `infographic.html`，浏览器打开可另存 SVG。
+
+**模式 B：动画 GIF（`scripts/gif_chart.py`，自研）**
+四类爆款动画，直接出 GIF：
+
+| 子命令 | 用途 | 数据 JSON 结构 |
+|---|---|---|
+| `bar-race` | 条形竞赛（排名随时间变化） | `{"title","times":[...],"series":{"名称":[数值×时间]}}` |
+| `count-up` | 数字滚动增长（KPI 从 0 涨到目标） | `{"title","items":[{"label","value","suffix"}]}` |
+| `progress` | 进度动画（`--style ring` / `bar`） | `{"label","value","max","color"}` |
+| `line-grow` | 折线逐步生长 | `{"title","x":[...],"series":{"名称":[数值]}}` |
+
+脚本自动设置中文字体、Agg 后端、自适应调色板控体积。
+
+## 什么时候用它
+
+- 要把参数、成分、对比数据做成一眼能看懂的信息图
+- 要发社媒动图（朋友圈、小红书），需要条形竞赛或数字滚动
+- 要出 SWOT、流程图、层级图这类结构化图
+- 要把报告里的 KPI 做成进度环动图当封面
+
+## 需要准备什么
+
+| 材料 | 说明 | 必需 |
+|---|---|---|
+| 数据或文字内容 | CSV / JSON / 自然语言描述 / 数字罗列都行 | 是 |
+| 输出模式 | 静态信息图，还是动画 GIF | 是 |
+| 主题名 | 用于落盘目录，必须是具体名 | 是 |
+
+**环境**：动画模式依赖 matplotlib + Pillow + numpy；还需设 `PYTHONPATH` 与 `EASEL_ROOT`（原因见「注意」第一节）。
+
+## 操作步骤
+
+### 第 1 步：确认输出模式
+
+需求明确（「做个条形竞赛动图」/「做个流程图」）就直接选，不必再问。
+
+### 第 2 步：提取内容结构
+
+分析输入，提取标题、描述、数据项。**必须尊重用户输入的语言：中文输入，所有文本必须是中文。**
+
+### 第 3 步：渲染
+
+**模式 A（静态 AntV）** 读 `references/antv-templates.md`：DSL 语法、模板选择指南、HTML 渲染模板。生成 HTML 保存到 `outputs/`。
+
+**模式 B（动画 GIF）** 先写数据到 JSON，再调脚本：
+
+```bash
+set PYTHONPATH=C:\Users\<你>\.qoder\shared\scripts
+set EASEL_ROOT=D:\电商工作区
+python C:\Users\<你>\.qoder\skills\infographic\scripts\gif_chart.py bar-race ^
+  --data data.json --output outputs\屿陶\四色光泽度.gif --width 900 --duration 5
+```
+
+通用参数：`--output x.gif`、`--data f.json`（`-` 读 stdin，省略用内置示例）、`--title`、`--width`（默认 900）、`--height`、`--fps`（默认 20）、`--duration`（秒，默认 4）。
+
+### 第 4 步：自检
+
+```bash
+python C:\...\infographic\scripts\gif_chart.py --selftest
+```
+
+## 命令速查
+
+| 子命令 / 参数 | 用途 |
+|---|---|
+| `gif_chart.py bar-race --data d.json --output x.gif` | 条形竞赛 |
+| `gif_chart.py count-up --data d.json --output x.gif` | 数字滚动 |
+| `gif_chart.py progress --data d.json --output x.gif --style ring` | 进度环（`bar` 为进度条） |
+| `gif_chart.py line-grow --data d.json --output x.gif` | 折线生长 |
+| `--width 900` / `--height` | 画布尺寸（宽度默认 900） |
+| `--fps 20` / `--duration 4` | 帧率与时长 |
+| `--title` | 图内标题 |
+| `--top-n` | 条形竞赛只显示前 N 名 |
+| `--selftest` | 自检 |
+
+## 你会拿到什么
+
+- 静态模式：`infographic.html`（矢量，浏览器打开可导出 SVG）
+- 动画模式：可直接发社媒的 `.gif` 文件
+- 产物落在 `outputs/<主题名>/` 下
+
+## 完整对话案例
+
+### 案例：四色马克杯的光泽度条形竞赛
+
+**你说：** 我有四个色号的马克杯，光泽度分别是晨白 92、雾凇 88、赭石 79、夜航 74，帮我做个条形竞赛动图，900 宽，5 秒。
+
+**它做：** 先写数据 JSON（每个 series 的数组长度必须等于 `times` 长度），再调脚本：
+
+```bash
+python C:\...\gif_chart.py bar-race --data outputs\屿陶\_data.json ^
+  --output outputs\屿陶\四色光泽度.gif --width 900 --duration 5
+```
+
+**你会看到（脚本打印的原话）：**
+
+```
+✅ outputs\屿陶\四色光泽度.gif (900x506, 96 帧 @ 20fps, 863 KB)
+```
+
+**它最后会如实告诉你三件事（全部实测，数字逐条回读过文件）：**
+
+1. **条形颜色锁不住品牌色** —— `bar-race` 没有颜色参数，条形颜色来自脚本内置调色板（实测产物为 #F08BB4 / #9661BC / #61DDAA / #F6BD16 / #5B8FF9），与你的品牌色无关。要和品牌一致就别用 `bar-race`，或出完再自行调色。只有 `progress` 会读数据里的 `color` 字段（实测传 #2E4A3F 后成品里该色占 4.3 万像素，确实生效）。
+2. **脚本打印的帧数 ≠ 文件里的帧数** —— 脚本按 `fps×duration` 生成帧并打印「生成帧数」，但 Pillow 存 GIF 时会把连续重复帧合并、把时长累加到保留帧上，所以**文件里帧数更少、每帧更长**。本包两个交付 GIF 的逐帧回读结果：
+
+   | 文件 | 脚本打印 | 文件实际帧数 | 帧时长分布 | 文件总时长 |
+   |---|---|---|---|---|
+   | `四色光泽度_bar.gif` | 96 帧 @ 20fps | **75 帧** | 50 / 100 / 950 ms | **4800 ms** |
+   | `骨粉含量_countup.gif` | 100 帧 @ 20fps | **37 帧** | 50 / 100 / 150 / 200 / 250 / 400 / 1950 ms | **5000 ms** |
+
+   计数方式：两文件均为 900×506；`bar.gif` 883,725 B，`countup.gif` 144,423 B。
+3. **时长会漂** —— 上面 `bar-race` 要的是 5 秒，落盘总时长 **4800 ms**（少 200 ms）；`count-up` 要的 5 秒落盘正好 **5000 ms**。**别拿 `--fps × --duration` 当交付承诺，出完必须回读文件核一遍帧数与总时长。**
+
+### 案例 2：参数对比信息图（静态）
+
+**你说：** 把这几个参数做成一张信息图：骨粉含量 ≥40%、烧成 1280℃、壁厚 3.4mm、单只重 262g、口径 96mm，再跟「普通骨瓷」对比一下。
+
+**它做：** 走模式 A，读 `references/antv-templates.md` 选对比型模板，出 1080×1440 的信息图 HTML，再用公共库渲染落盘 2160×2880 的 2 倍图。
+
+**它最后会要求你补一句免责：** 参数是设计占位值时，图上必须写明「参数为设计占位值 · 上线前替换为批次检测数据」。实测中信息图原先写「来源：GB 4806.4 检测报告」，因为没有对应批次报告，属虚假宣传，已改成上面那句。
+
+## 常见问题 FAQ
+
+**Q1：装完第一次跑就报 `ModuleNotFoundError: No module named 'output_paths'`？**
+A：**装完先解决模块导入，否则第一步就报错**。`gif_chart.py` 第 33 行按「技能目录往上第三层的 `shared/scripts`」找 `output_paths`，装在 `.qoder\skills\infographic\scripts\` 时解析成 `.qoder\shared\scripts`。实测要设 `PYTHONPATH` 指向该目录才跑通：CMD `set PYTHONPATH=C:\Users\<你>\.qoder\shared\scripts`、PowerShell `$env:PYTHONPATH="..."`。这是打包布局所致，不是 bug。
+
+**Q2：报 `RuntimeError: 找不到 Easel 项目根`？**
+A：它从脚本自身位置往上逐层找第一个含 `outputs` 的目录（与你在哪个目录执行无关）。解法：设 `set EASEL_ROOT=D:\电商工作区`，或先在 `C:\Users\<你>\` 下建好 `outputs\` 目录。
+
+**Q3：`bar-race` 报「series['北京'] 长度须等于 times 长度 4」？**
+A：每个 series 的数组长度**必须等于** `times` 的长度，少一个数就报错并以退出码 2 结束。
+
+**Q4：忘了给 `--data` 会怎样？**
+A：用脚本内置示例数据，出来的 GIF 是演示内容，**别当成品交客户**。
+
+**Q5：怎么和「图表 / 报告」类技能分工？**
+A：本技能 = 本地渲染（静态信息图 + GIF 动图）。要单张静态图片 URL 用 `chart-visualization`；要 CSV / JSON → 整页报告用 `data-report`。
+
+## 注意
+
+- **装完先解决模块导入，否则第一步就报错**：`gif_chart.py` 第 33 行按「技能目录往上第三层的 `shared/scripts`」找 `output_paths`，装在 `.qoder\skills\infographic\scripts\` 时解析成 `.qoder\shared\scripts`。实测要设 `PYTHONPATH` 指向该目录才跑通：CMD `set PYTHONPATH=C:\Users\<你>\.qoder\shared\scripts`、PowerShell `$env:PYTHONPATH="..."`；不设报 `ModuleNotFoundError: No module named 'output_paths'`（打包布局所致，非 bug）。
+- `--output` 会经公共库 `output_paths.validate_output_path` 硬校验：必须落在 `outputs/<具体主题>/` 下、不能散在 `outputs/` 根目录，主题名也不许 `output`、`test`、`临时`、`主题名` 这类泛名，否则直接拒写。
+- 找不到项目根会抛 `RuntimeError: 找不到 Easel 项目根；请设置 EASEL_ROOT`——它从脚本自身位置往上逐层找第一个含 `outputs` 的目录（与你在哪个目录执行无关）。解法：设 `set EASEL_ROOT=D:\电商工作区`，或先在 `C:\Users\<你>\` 下建好 `outputs\` 目录。
+- `bar-race` 里每个 series 的数组长度必须**等于 `times` 的长度**，少一个数就报 `series['北京'] 长度须等于 times 长度 4` 并以退出码 2 结束。
+- 省略 `--data` 时用的是脚本内置示例数据，出来的 GIF 是演示内容，别当成品交客户。
+- **锁不住品牌色的子命令（实测）**：只有 `progress` 读数据里的 `color` 字段（实测传 #2E4A3F 后成品里该色占 4.3 万像素，确实生效）。`bar-race` 没有颜色参数，条形颜色来自脚本内置调色板（实测产物为 #F08BB4 / #9661BC / #61DDAA / #F6BD16 / #5B8FF9），与品牌色无关。要和品牌一致就别用 bar-race，或出完再自行调色。
+- **脚本打印的帧数不等于文件里的帧数（实测，已找到根因）**：脚本按 `fps×duration` 生成帧并打印「生成帧数」，但 Pillow 存 GIF 时会把连续重复帧合并、把时长累加到保留帧上，所以文件里帧数更少、每帧更长，总长也会漂。本包两个交付 GIF 逐帧回读：`四色光泽度_bar.gif` 脚本打印 96 帧、文件实为 **75 帧**（50/100/950 ms，总长 **4800 ms**）；`骨粉含量_countup.gif` 脚本打印 100 帧、文件实为 **37 帧**（50/100/150/200/250/400/1950 ms，总长 **5000 ms**）。**别拿 `--fps × --duration` 当交付承诺，出完必须回读文件核一遍。**
+- 静态模式基于 AntV 开源生态（antvis）的 `@antv/infographic` DSL 渲染引擎；动画 GIF 模式为自研脚本（matplotlib + Pillow + numpy）。
+
+## 修复记录
+
+- 本包未改动技能本体，zip 内容与技能原版一致；说明书由 AI灵匣整理。
+- **本包两轮全流程实测中，本技能被实际调用 3 次**，逐步记录如下（原始日志见交付物 `07_过程档案/scripts_stage_log.json` 与 `scripts_stage2_log.json`）：
+  - `41_gif_count_up` **rc=0** → `骨粉含量_countup.gif (900x506, 100 帧 @ 20fps, 141 KB)`
+  - `42_gif_bar_race` **rc=2（失败）** → `ERROR: bar-race 需要 {times:[...], series:{名称:[数值,...]}}`——数据 JSON 结构不对，**这是本技能的硬性输入契约，不是脚本坏了**
+  - `42b_gif_bar_race`（修正数据后）**rc=0** → `四色光泽度_bar.gif (900x506, 96 帧 @ 20fps, 863 KB)`
+- **帧数已逐帧回读核过（不采信脚本打印值）**：`bar.gif` 883,725 B / 文件实为 **75 帧** / 帧时长 50·100·950 ms / 总长 **4800 ms**；`countup.gif` 144,423 B / 文件实为 **37 帧** / 帧时长 50·100·150·200·250·400·1950 ms / 总长 **5000 ms**。脚本打印的「生成帧数」（96 / 100）**与文件实际帧数不等**，根因是 Pillow 合并了连续重复帧并累加时长——这一条已写进「注意」，提醒买家**别拿 `--fps × --duration` 当交付承诺**。
+- **抓到并修掉一处合规缺陷**：信息图右下原写「来源：GB 4806.4 检测报告 / 自有窑口实测」——本轮参数全部是占位值、没有对应批次报告，属虚假宣传。已改为「参数为设计占位值 · 上线前替换为批次检测数据」。
+- **两处环境坑已如实记录**：`gif_chart.py` 的 `output_paths` 导入需设 `PYTHONPATH`；项目根识别需设 `EASEL_ROOT`。两条都写进 FAQ 与「注意」，并注明「打包布局所致，非 bug」。
+
+━━━━━━━━━━━━━━━━━━━━━━━━ 淘宝店AI灵匣 ━━━━━━━━━━━━━━━━━━━━━━━━
+  安装：把本技能文件夹（或解压 zip）放入智能体的技能目录即可被识别。
+  用法：把需求直接说给智能体，提到相关触发词时会自动调用本技能。
+  售后：淘宝店「AI灵匣」，有问题随时联系客服。
+━━━━━━━━━━━━━━━━━━━━━━━━ 淘宝店AI灵匣 ━━━━━━━━━━━━━━━━━━━━━━━━
+【安装方式】（把 ZIP 拖进对话框，发一句话就装好）
+
+  第 1 步｜上传
+      把本文件夹里的 infographic.zip 直接拖进 AI 对话框（和发图片一样），
+      不用解压、不用找文件夹、不用装任何软件。
+
+  第 2 步｜复制下面这句话，粘贴发送
+
+      「请解压并安装这个技能包：数据信息图与动画图表。
+       装好后告诉我安装结果，以及之后怎么调用它。」
+
+  第 3 步｜收到「安装完成」就能用了
+      直接说「使用数据信息图与动画图表」，或者干脆直接描述你的需求。
+
+  · 一次装多个：把多个 zip 一起拖进对话框，再发
+    「请把上面这些技能包全部解压安装」。
+  · 不限定哪个 AI：只要你的 AI 支持上传文件、能读写自己的
+    技能目录就能用，不绑定平台或品牌。它要是说不会装，补一句：
+    「把技能包解压后放进你的技能目录，SKILL.md 在第一层即可」。
+  · 装好后不联网也能用；带脚本的技能需要本机有 Python 3.8+。
+
+━━━━━
+

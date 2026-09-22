@@ -1,0 +1,261 @@
+【所属分类】08_品牌视觉体系构建
+【技能名称】设计咨询与风格定调
+【技能标识】design-consultation
+【功能描述】设计咨询：先理解你的产品，再调研同类与竞品视觉，然后提出一套完整设计系统提案（美学方向、装饰层级、版式、色彩、字体、间距、动效），并生成字体与配色预览。最终把结论写成 DESIGN.md，作为项目的设计唯一真源。当用户说「做个设计系统」「定品牌规范」「从零开始设计」「创建 DESIGN.md」时使用。
+
+【详细概述】
+
+
+
+# 设计咨询与风格定调
+
+> 六个阶段从「你的产品是什么」问到「DESIGN.md 怎么写」，最后交一份带 SAFE / RISK 分层的完整设计系统提案。
+
+## 这个技能能做什么
+
+它不画图，**它定调**。产出的核心是一份 `DESIGN.md`——你项目的**设计唯一真源（design source of truth）**，之后所有页面、物料、外包都照它执行。
+
+**六个阶段（`sections/proposal-and-preview.md` 的真实骨架）：**
+
+| 阶段 | 做什么 |
+|---|---|
+| Phase 0 | 预检：有没有 `DESIGN.md`、有没有 `PRODUCT.md`、读仓库上下文 |
+| Phase 1 | 产品上下文：这是什么产品、给谁用、要传达什么 |
+| Phase 2 | 调研：同类产品与竞品视觉水位（**只在你说了「要」的时候才跑**） |
+| Phase 3 | 完整提案：七维度 + SAFE / RISK 分层 |
+| Phase 4 | 追问细化：**只在你要求调整时才进入** |
+| Phase 5 | 设计系统预览：**默认开启** |
+| Phase 6 | 写 `DESIGN.md` 并确认 |
+
+**Phase 3 的七维度提案**（原文结构，逐项都要给理由）：
+
+```
+AESTHETIC   ：美学方向 —— 一句话理由
+DECORATION  ：装饰层级 —— 为什么配这个美学
+LAYOUT      ：版式路线 —— 为什么适合这个产品类型
+COLOR       ：用色路线 + 建议色板（hex）+ 理由
+TYPOGRAPHY  ：3 个字体推荐（含各自角色）+ 为什么是它们
+SPACING     ：基准单位 + 疏密 —— 理由
+MOTION      ：动效路线 —— 理由
+
+这套系统自洽，因为【说明各项选择如何互相强化】
+```
+
+**提案必须带 SAFE / RISK 两层**（这是它最有价值的设计）：
+
+```
+SAFE CHOICES（品类基线 —— 你的用户预期如此）：
+  - 2-3 条符合品类惯例的决定，并说明「保守的理由」
+RISKS（你的产品长出自己面孔的地方）：
+  - 2-3 条刻意偏离惯例的地方
+  - 每条都要写：它是什么、为什么成立、你得到什么、你付出什么
+```
+
+**Phase 6 产出的 `DESIGN.md` 有固定 16 节**：Overview / Colors / Typography / Layout / Elevation & Depth / Shapes / Components / Do's and Don'ts / Motion / **Decisions Log** / Design System 等。**「Decisions Log」是关键一节**——它记的是「当初为什么这么定」，半年后接手的人靠它才能不改错地方。
+
+**它还会记「口味档案」**：`~/.gstack/projects/<项目>/taste-profile.json` 记录你在每个维度上**批准过**和**否决过**的条目（各带 `approved_count` / `rejected_count` / `last_seen`），置信度**每周衰减 5%**——也就是说你三年前的口味会自动变淡，最近的选择权重更高。
+
+## 什么时候用它
+
+- 不知道该定什么视觉调性，想先拿到 2-3 个可比的方向
+- 要一份**能说服老板或客户**的设计系统提案（它有 SAFE / RISK 分层，正好用来讲取舍）
+- 接手新产品，需要先摸清同类产品的视觉水位
+- 要从零建一个项目，先把 `DESIGN.md` 立起来当唯一真源
+
+**同包内怎么选**：
+- 调性已定，只要**令牌与组件规格** → 用「设计令牌与组件规范」
+- 要 **Logo / CIP / 图标 / 社媒图** → 用「全案设计流程」
+- 已经有图，只想问「好不好看、怎么改」 → 用「审美原理与视觉评审」
+
+## 需要准备什么
+
+| 材料 | 说明 | 必需 |
+|---|---|---|
+| 产品说明 | 是什么、给谁、解决什么 | 是（没有它会先问你要） |
+| 品类 / 竞品 | 你说「要调研」时它才去查 | 否 |
+| 已有规范 | 已有 `DESIGN.md` / 品牌手册就给它 | 否 |
+
+**⚠️ 一个必须提前知道的运行前提（本机实测结论）：**
+
+这个技能的上游是 **gstack 工作流技能**，SKILL.md 的 `Preamble` 依赖一整套 gstack 运行时：
+
+```bash
+_SS="$HOME/.claude/skills/gstack/bin/gstack-skill-start"
+[ -x "$_SS" ] || _SS=".claude/skills/gstack/bin/gstack-skill-start"
+"$_SS" --skill "design-consultation" --model "claude" --parent-pid "$PPID"   || echo "SKILL_START: unavailable — stale install; run ./setup or /gstack-upgrade (preamble degraded, continue the user's task)"
+```
+
+**本机实测：`~/.claude/skills/gstack` 目录不存在，`bun` 也未安装。**所以这段 preamble 会走到那个 `||` 分支，打印 `SKILL_START: unavailable`。
+
+**但这不影响用它。**SKILL.md 自己定义了**降级模式**，原文写得很清楚：
+
+> **Degraded mode:** if `SKILL_START_PROTO: 1` is missing from the output（脚本缺失、安装过期或协议号不同），**套用安全默认值**：把 `SESSION_KIND` 当作 `interactive`，不要假定有 Conductor，**跳过 onboarding / 遥测步骤**（它们的闸门是基于标记的，同意与引导提示会**延后到下次健康运行**，不会丢），告诉用户去跑 `./setup` 或 `/gstack-upgrade`，**然后继续执行用户的任务**。
+
+**所以实际能用的是**：Phase 0 → 1 → 2 → 3 → 4 → 5（走 Path B 的 HTML 预览页）→ 6 写 `DESIGN.md` 这条主流程。
+**实际用不了的是**：遥测（Telemetry）、`aside` 真实浏览器调研、`gstack-*` 系列辅助脚本（决策检索、学习记录、口味档案读写）、codex 外部独立复核。这些环节会各自打印 unavailable 或直接跳过。
+
+**联网调研怎么办**：Phase 2 的调研原本走 `aside` 浏览器；不可用时你自己把竞品截图或链接给它，效果一样。
+
+## 操作步骤
+
+### 第 1 步：告诉它产品是什么
+
+「我要做一个轻奢陶瓷礼品的店铺视觉体系，受众是 25-35 岁女性，主打手作与日常仪式感。」——它进 Phase 1。
+
+### 第 2 步：它问你要不要调研
+
+Phase 2 **只在你说了「要」的时候才跑**（原文：`## Phase 2: Research (only if user said yes)`）。要就说要。
+
+### 第 3 步：拿 Phase 3 的完整提案
+
+它会以 `AskUserQuestion` 的形式给你七维度提案 + SAFE / RISK 分层。**SAFE 是「你的用户预期如此」，RISK 是「你的产品长出自己面孔的地方」**——RISK 每一条都会写明你得到什么、付出什么。
+
+### 第 4 步（可选）：要改就进 Phase 4 追问细化
+
+不问就跳过。
+
+### 第 5 步：看设计系统预览（默认开启）
+
+- **Path A：AI 样机** —— 需要 `DESIGN_READY`（即 gstack 的 `design` 可执行文件在位）。**本机不可用。**
+- **Path B：HTML 预览页** —— `DESIGN_NOT_AVAILABLE` 时的回退路径，产出字体与配色的 HTML 预览页。**本机走这条。**
+
+### 第 6 步：写 `DESIGN.md` 并确认
+
+产出 16 节的设计唯一真源，含 `Decisions Log`。之后所有设计工作都以它为准。
+
+## 命令速查
+
+**没有命令行。**它的接口是对话 + `AskUserQuestion`。
+
+| 你怎么说 | 走到哪 |
+|---|---|
+| 「做个设计系统」/「定品牌规范」 | 从 Phase 0 开始 |
+| 「从零开始设计」/「创建 DESIGN.md」 | 同上，目标是写出 `DESIGN.md` |
+| 「要调研竞品」 | 开启 Phase 2 |
+| 「这个方向改成更暖的」 | 进 Phase 4 追问细化 |
+
+**它会在这些路径读你的历史决策**（SKILL.md 的 `gbrain.context_queries` 原文）：
+
+| 查询 | 读什么 |
+|---|---|
+| `existing-design-md` | 项目里的 `DESIGN.md`（如果有） |
+| `prior-design-decisions` | `~/.gstack/projects/<项目>/*-design-*.md` 最近 3 份 |
+| `brand-guidelines` | 与品牌相关的历史笔记最近 3 条 |
+
+**本机现实**：`~/.gstack` 目录不存在，所以后两条读不到内容，只有项目里的 `DESIGN.md` 与 `PRODUCT.md`／`README.md`／`package.json` 这几项**能真读到**。
+
+## 你会拿到什么
+
+- **一份完整设计系统提案**：七维度（美学 / 装饰 / 版式 / 用色 / 字体 / 间距 / 动效）+ 每项理由，并附 **SAFE CHOICES 与 RISKS 两层**
+- **字体与配色预览**：HTML 预览页（本机走 Path B）
+- **`DESIGN.md`** —— 16 节的设计唯一真源，含 `Decisions Log`（当初为什么这么定）
+- **自洽性说明**：为什么这套选择互相强化，而不是七项各自为政
+- **独立意见对比**（若可用）：其它声音的吻合处、分歧处、被采纳的想法及来源
+
+**质量纪律（原文，值得单独记住）**：「**不要把一致当成投票，也不要编造一份并不存在的意见**」（`Do not count agreement as a vote or invent a missing proposal`）。
+
+## 完整对话案例
+
+### 本包实测：这个技能在本机是什么状态
+
+**结论先说：本包全流程实测没有把它当主路径跑。**原因不是它不好，而是**它的运行前提在本机不成立**——这是实测出来的事实，不是推测：
+
+| 它需要的 | 本机实测 |
+|---|---|
+| `~/.claude/skills/gstack/bin/gstack-skill-start` | **不存在**（`~/.claude` 目录整体不存在） |
+| `bun`（SKILL.md 里多处用 `bun run`） | **未安装** |
+| `aside` 真实浏览器 | 未安装 |
+| gstack 的 `browse` / `design` 二进制 | 未安装 |
+| `~/.gstack/projects/.../taste-profile.json` | 不存在 |
+
+**所以它会打印 `SKILL_START: unavailable`，然后按 SKILL.md 自己定义的降级模式继续跑。**
+
+**那它在本包里实际贡献了什么？**——它的**方法论骨架**被本包直接借用了，而且是可验证的：
+
+**① Phase 3 的 SAFE / RISK 分层，被本包用来做设计取舍记录。**比如物料配色：本包落地的是米色纸面 `#f0e6d2` + 描金，而不是技能推荐的 `Liquid Glass`（玻璃拟态）。按 SAFE / RISK 的框架，这里的取舍是：
+
+- **SAFE**：米白纸面、衬线标题、大量留白 —— 礼品品类的用户预期就是「干净、有质感、不像广告」
+- **RISK**：**整页只用一个商品色（晨白）**，四色可选只做一屏排列而不做成四套详情 —— 得到的是「高级感与整体性」，付出的是「单页信息量下降」
+
+**② Phase 6 的 `Decisions Log` 一节，直接对应到本包的过程档案。**交付物里的 `07_过程档案/08_本轮修正记录.txt`（8774 B）就是这个角色的东西——它记的不是「改了什么」，而是**「当初为什么这么改」**，包括**如实记下上一轮记载有误的那一处**（上一版把色号一致性写成「修正前 0.00」并把 ΔE76 当成修正后结果，本版按原始 JSON 重写）。
+
+**一句话总结**：这个技能的**流程方法论（六阶段 + SAFE/RISK + Decisions Log）在本包真用上了**；它的**gstack 运行时在本机不可用**，说明书如实写明，不假装它能全跑。
+
+## 常见问题 FAQ
+
+**Q1：它报 `SKILL_START: unavailable`，是坏了吗？**
+A：不是坏，是**本机没有 gstack 运行时**（`~/.claude/skills/gstack`）。SKILL.md 自己定义了这个降级路径，原文说「**套用安全默认值…然后继续执行用户的任务**」。照常往下用即可，只是遥测、`aside` 浏览器调研、`gstack-*` 辅助脚本、codex 外部复核这几块用不了。
+
+**Q2：那 Phase 2 的竞品调研还能做吗？**
+A：能。原本走 `aside` 浏览器自动抓，不可用时你**手动把竞品截图或链接给它**，效果一样，只是少了自动抓取那一步。
+
+**Q3：Phase 5 的设计系统预览出得来吗？**
+A：出得来。Phase 5 有两条路——Path A（AI 样机，需 `DESIGN_READY`，**本机不可用**）与 **Path B（HTML 预览页，`DESIGN_NOT_AVAILABLE` 时的回退）**。本机走 Path B，能出字体与配色的 HTML 预览页。
+
+**Q4：`DESIGN.md` 里哪一节最重要？**
+A：`Decisions Log`。它记的是「当初为什么这么定」。半年后接手的人靠这一节才不至于把有理有据的决定当成随意选择而改掉。
+
+**Q5：它会不会为了显得努力而编造一份「独立意见」？**
+A：SKILL.md 明确禁止：「**不要把一致当成投票，也不要编造一份并不存在的意见**」（`Do not count agreement as a vote or invent a missing proposal`）。没跑成的意见它必须标成 `unavailable` 或 `declined`，不能编。
+
+**Q6：口味档案是干什么的？**
+A：`taste-profile.json` 记录你在每个维度上批准过 / 否决过的条目与次数，**置信度每周衰减 5%**——你最近的选择权重更高，几年前的口味会自然变淡。**本机 `~/.gstack` 不存在，这条功能读不到也写不了。**
+
+**Q7：`DESIGN.md` 会写到哪？**
+A：项目根目录（`DESIGN.md`）。Phase 0 会先检查 `ls DESIGN.md design-system.md` 看有没有现成的。
+
+**Q8：它和「审美原理与视觉评审」什么关系？**
+A：分工明确——**这个定调（提出系统）**，那个**评审（判断好不好）**。定调完想复核，用审美那一个。
+
+## 注意
+
+- **运行前提（本机实测，必须知道）**：SKILL.md 的 `Preamble` 依赖 gstack 运行时 `~/.claude/skills/gstack/bin/*` 与 `bun`；**本机两者都不存在**（`~/.claude` 目录整体不存在、`bun` 未安装）。它会打印 `SKILL_START: unavailable`，然后按 SKILL.md 自带的**降级模式**继续——**这是设计好的路径，不是故障**。
+- **降级后能用的**：Phase 0 → 1 → 2 → 3 → 4 → 5（Path B HTML 预览页）→ 6 写 `DESIGN.md`。
+  **降级后用不了的**：遥测（Telemetry）、`aside` 真实浏览器调研、`gstack-*` 系列辅助脚本（决策检索 / 学习记录 / 口味档案读写）、codex 外部独立复核。这些环节会各自打印 unavailable 或直接跳过。
+- **Phase 2 只在你说了「要」的时候才跑**（`only if user said yes`）；**Phase 4 只在你要求调整时才进**；**Phase 5 默认开启**。
+- **Phase 5 两条路**：Path A「AI 样机」需 `DESIGN_READY`（gstack 的 `design` 可执行文件在位，**本机不可用**）；Path B「HTML 预览页」是 `DESIGN_NOT_AVAILABLE` 时的回退（**本机走这条**）。
+- **提案必须带 SAFE / RISK 两层**：SAFE 是符合品类惯例、用户预期如此的决定（要写保守的理由）；RISK 是刻意偏离惯例、长出自己面孔的地方（每条写：是什么、为什么成立、得到什么、付出什么）。
+- **`DESIGN.md` 有固定 16 节**，其中 **`Decisions Log`（决策日志）最关键**——它记的是「当初为什么这么定」，不要删。
+- **质量纪律**：不要把「一致」当成投票，也不要编造一份并不存在的意见（原文 `Do not count agreement as a vote or invent a missing proposal`）。没跑成的独立意见必须标 `unavailable` 或 `declined`。
+- **口味档案路径** `~/.gstack/projects/<项目>/taste-profile.json`，置信度**每周衰减 5%**；本机 `~/.gstack` 不存在，此功能不可用。
+- **路径读入项**：Phase 0 会读项目里的 `DESIGN.md`、`PRODUCT.md`、`README.md`、`package.json`、`src/` 等；`gbrain` 还会找 `~/.gstack/projects/<项目>/*-design-*.md`（本机读不到）。
+- 本技能 `version: 1.0.0`、`preamble-tier: 3`，**frontmatter 内没有 license 字段**；上游仓库 `garrytan/gstack` 的 `LICENSE` 经核实为 **MIT**。
+- 本技能没有 `EASEL-META.md`：从公共开源仓库整包收录，来源与许可记录在自带 frontmatter 与上游仓库里。
+- 技能内自带溯源声明（原文）：「The font-selection procedure and the three-looks calibration in this section are derived from **pbakaus/impeccable** `reference/new-work.md` (**Apache-2.0**), rewritten and modified. See NOTICE.md.」——字体选型流程与三稿校准这两段来自 Apache-2.0 上游项目，已改写并标注。
+
+## 修复记录
+
+- **本包未改动技能本体。** zip 内 5 个文件（`SKILL.md` 71166 B、`SKILL.md.tmpl`、`sections/manifest.json`、`sections/proposal-and-preview.md` 26100 B、`sections/proposal-and-preview.md.tmpl`）与本机实测所用安装版本**逐文件 MD5 一致**。
+- **来源已核实**：上游仓库 `garrytan/gstack`（作者 `garrytan`，星标 **133,425**），收录路径 `design-consultation`，记录在 `_art2/_fills/all_manifest.json`。**技能 frontmatter 内没有 license 字段**，本说明书另行核实上游仓库 `LICENSE` 为 **MIT**，并在「注意」里注明「许可来自上游仓库、不是技能内声明」——**这条区别如实写明，不混为一谈**。
+- **本机运行前提已实测并如实记录（本说明书最重要的一条）**：本机 `~/.claude/skills/gstack` 目录不存在、`bun` 未安装，因此 SKILL.md 的 `Preamble` 必然回到 `SKILL_START: unavailable` 分支。**这不是本包改动造成的**，是上游技能依赖 gstack 工作流运行时所致。说明书按 SKILL.md 自带的降级说明，逐条列出「降级后能用什么 / 不能用什么」，**不假装它能全跑**。
+- **一处上游溯源声明原样保留**：`sections/proposal-and-preview.md` 顶部注明字体选型流程与三稿校准两段改写自 `pbakaus/impeccable`（**Apache-2.0**），并指向 `NOTICE.md`。本说明书把这条声明写进「注意」，保证许可链条透明。
+- **一处方法论被本包真正借用并已对应到产物**：Phase 3 的 SAFE / RISK 分层与 Phase 6 的 `Decisions Log` 思路，对应交付物 `07_过程档案/08_本轮修正记录.txt`——该文件记的不是「改了什么」而是**「当初为什么这么改」**，并**如实记下上一轮记载有误的一处**（上一版把色号一致性写成「修正前 0.00」并把 ΔE76 当成修正后结果，本版按 `colorway_before.json` 与 `终检_现量.json` 重写）。
+
+━━━━━━━━━━━━━━━━━━━━━━━━ 淘宝店AI灵匣 ━━━━━━━━━━━━━━━━━━━━━━━━
+  安装：把本技能文件夹（或解压 zip）放入智能体的技能目录即可被识别。
+  用法：把需求直接说给智能体，提到相关触发词时会自动调用本技能。
+  售后：淘宝店「AI灵匣」，有问题随时联系客服。
+━━━━━━━━━━━━━━━━━━━━━━━━ 淘宝店AI灵匣 ━━━━━━━━━━━━━━━━━━━━━━━━
+【安装方式】（把 ZIP 拖进对话框，发一句话就装好）
+
+  第 1 步｜上传
+      把本文件夹里的 design-consultation.zip 直接拖进 AI 对话框（和发图片一样），
+      不用解压、不用找文件夹、不用装任何软件。
+
+  第 2 步｜复制下面这句话，粘贴发送
+
+      「请解压并安装这个技能包：设计咨询与风格定调。
+       装好后告诉我安装结果，以及之后怎么调用它。」
+
+  第 3 步｜收到「安装完成」就能用了
+      直接说「使用设计咨询与风格定调」，或者干脆直接描述你的需求。
+
+  · 一次装多个：把多个 zip 一起拖进对话框，再发
+    「请把上面这些技能包全部解压安装」。
+  · 不限定哪个 AI：只要你的 AI 支持上传文件、能读写自己的
+    技能目录就能用，不绑定平台或品牌。它要是说不会装，补一句：
+    「把技能包解压后放进你的技能目录，SKILL.md 在第一层即可」。
+  · 装好后不联网也能用；带脚本的技能需要本机有 Python 3.8+。
+
+━━━━━
+

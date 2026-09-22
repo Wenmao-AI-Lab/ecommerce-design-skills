@@ -1,0 +1,214 @@
+【所属分类】01_公共运行库与账号视觉基线
+【技能名称】电商美工公共运行库
+【技能标识】ecom-shared-runtime
+【功能描述】本技能包的公共运行库（不是会对话的技能）：图像处理、HTML 渲染出图、AI 抠图、文案字数校验、落盘路径校验、Markdown 转 PDF 六个底层脚本。包内「通用图像处理加工」「商品图抠图与去背景」「竖版营销海报生成」「带货转化营销文案」「数据信息图与动画图表」的技能命令全部跑在这套脚本上，所以必须先装它。触发词：改尺寸、压缩图片、加水印、拼图、渲染出图、抠图、字数校验、转 PDF。
+
+【详细概述】
+
+
+
+# 电商美工公共运行库
+
+> 把「出图」从即兴写脚本变成确定性调用——同一张图跑一百次结果一致，参数错了当场报错，而不是静默出一张废图。
+
+## 这个技能能做什么
+
+它不是技能，是**底座**。六个脚本各管一段，互相不 import，缺哪个补哪个：
+
+| 脚本 | 干什么 | 谁在用它 |
+|---|---|---|
+| `image_ops.py` | 改尺寸 / 裁剪 / 补边 / 转格式 / 压体积 / 加水印 / 圆角 / 拼图 / 缩略图 / 读图信息 | 通用图像处理加工 |
+| `render_card.py` | 把排好的 HTML 渲染成 PNG（Playwright + Chromium，视口精确到像素） | 竖版营销海报生成、社媒卡片视觉设计规范 |
+| `remove_bg.py` | AI 语义分割抠图（rembg u2net 系列），出透明底 / 换白底 / 换场景底 | 商品图抠图与去背景 |
+| `wordcount.py` | 文案字数校验（中文字符 + 英文单词 + 数字串 + 标点，贴近平台计法） | 带货转化营销文案 |
+| `output_paths.py` | 落盘路径校验：产物必须落在 `outputs/<具体主题>/` | 上面全部 |
+| `doc_convert.py` | Markdown → HTML / PDF / 长图 PNG | 交付物打包
+
+## 什么时候用它
+
+- 装完技能包第一次开跑，先确认公共库就位（后面五个技能全靠它）
+- 只想改尺寸 / 压大小 / 加水印 / 拼联排，不动设计
+- 要把排好的卡片、海报、详情页章节卡渲染成 PNG
+- 要把商品图从背景里抠出来换白底、换场景底
+- 要校验一段文案卡不卡得过平台字数上限
+- 要把交付说明转成 PDF 发给客户
+
+## 需要准备什么
+
+| 材料 | 说明 | 必需 |
+|---|---|---|
+| 本机 Python | 3.8 以上（实测 3.12.10 全程 rc=0） | 是 |
+| Pillow | 图像处理全部依赖它（`python -c "import PIL"` 能过即可） | 是 |
+| rembg + onnxruntime | 只有抠图需要；首次运行会下载约 168 MB 的 u2net 模型 | 抠图时 |
+| Playwright + Chromium | 只有 HTML 渲染出图需要（`pip install playwright` + `playwright install chromium`） | 渲染时 |
+| matplotlib / numpy | 只有动画图表脚本需要 | 出 GIF 时 |
+
+## 操作步骤
+
+### 第 1 步：装到共享目录（顺序不能颠倒）
+
+把 `ecom-shared-runtime.zip` 解压出的 `scripts/` 放到智能体的共享脚本目录：
+
+```
+C:\Users\<你>\.qoder\shared\scripts\
+```
+
+装完确认六个文件都在：`image_ops.py`、`render_card.py`、`remove_bg.py`、`wordcount.py`、`output_paths.py`、`doc_convert.py`。
+
+### 第 2 步：自检
+
+```bash
+python C:\Users\<你>\.qoder\shared\scripts\image_ops.py --selftest
+python C:\Users\<你>\.qoder\shared\scripts\remove_bg.py selftest
+python C:\Users\<你>\.qoder\shared\scripts\wordcount.py selftest
+python C:\Users\<你>\.qoder\shared\scripts\doc_convert.py selftest
+python C:\Users\<你>\.qoder\shared\scripts\render_card.py --selftest
+```
+
+五条全过就等于底座就位。
+
+### 第 3 步：设工作根目录
+
+```bash
+set EASEL_ROOT=D:\电商工作区          （CMD）
+$env:EASEL_ROOT="D:\电商工作区"        （PowerShell）
+```
+
+之后所有产物落在 `%EASEL_ROOT%\outputs\<具体主题名>\` 下。
+
+### 第 4 步：正常调用
+
+其余五个技能的说明书里写着 `python skills/shared/scripts/xxx.py`，指的就是这套脚本；把路径换成上面的绝对路径即可，两种写法等价。
+
+## 命令速查
+
+| 脚本 / 子命令 | 用途 |
+|---|---|
+| `image_ops.py resize -i 入 -o 出 --width 1080` | 按宽缩放（`--percent` / `--keep-ratio` 可选） |
+| `image_ops.py crop -i 入 -o 出 --box 100,50,900,650` | 按坐标裁；给 `--width/--height` 则居中裁 |
+| `image_ops.py pad -i 入 -o 出 --ratio 9:16 --background "#ffffff"` | 补边到目标比例，不裁内容不变形 |
+| `image_ops.py convert -i 入 -o 出 --format webp --quality 85` | 转 png / jpg / webp |
+| `image_ops.py compress -i 入 -o 出 --max-kb 200` | 压到目标体积上限 |
+| `image_ops.py watermark -i 入 -o 出 --text "@账号" --position bottom-right` | 文字水印（自动找中文字体） |
+| `image_ops.py watermark -i 入 -o 出 --image logo.png --scale 0.3` | 图片水印 |
+| `image_ops.py round -i 入 -o 出 --radius 60` | 圆角（`--radius-percent 50` 得圆形） |
+| `image_ops.py collage -i a.jpg b.jpg -o 出 --mode horizontal --gap 12` | 横向 / 纵向拼接 |
+| `image_ops.py collage -i 1.jpg 2.jpg 3.jpg 4.jpg -o 出 --grid 2x2` | 网格拼接（`--grid` 是「列x行」） |
+| `image_ops.py thumbnail -i 入 -o 出 --size 256` | 生成缩略图 |
+| `image_ops.py info -i 入` | 读尺寸 / 格式 / 比例 / 体积（JSON） |
+| `render_card.py --html x.html --out x.png --full-page --width 1080 --height 1920` | HTML 渲染成图 |
+| `render_card.py --html x.html --out x.png --scale 2` | 出 2 倍高清图 |
+| `remove_bg.py check` | 抠图环境自检 |
+| `remove_bg.py remove -i 入 -o 出.png --bg-color white` | 抠成白底 |
+| `remove_bg.py remove -i 入 -o 出.png --model u2net_human_seg --alpha-matting` | 人像精细抠 |
+| `wordcount.py count -f 稿.txt` | 字数统计（JSON，含 `social_count`） |
+| `wordcount.py check -f 稿.txt --target 20 --tolerance 2` | 是否命中目标字数 |
+| `output_paths.py --system` | 打印本包落盘规约 |
+| `doc_convert.py convert -i a.md -o a.pdf --format pdf` | Markdown → PDF |
+| `doc_convert.py convert -i a.md -o a.png --format png --width 750` | Markdown → 长图 PNG |
+
+## 你会拿到什么
+
+- 一套可重复调用的确定性出图底座，六个脚本全部带 `--help` 与 `--selftest`
+- 十种图像处理结果（resize / crop / pad / convert / compress / watermark / round / collage / thumbnail / info）
+- PNG / JPEG 渲染产物，视口尺寸精确到像素；`--scale 2` 直接出高清图
+- 透明底 PNG，或换好白底 / 场景底的商品图
+- 权威字数与「是否命中目标字数」的判定结果
+- Markdown → HTML / PDF / 长图 PNG 三种交付格式
+
+## 完整对话案例
+
+### 案例 1：验证底座就位
+
+**你说：** 我在 D 盘建了电商工作区，帮我把公共运行库的五个自检都跑一遍，看有没有缺依赖。
+
+**它做（逐条执行并回报）：**
+
+```
+image_ops.py   --selftest   → ✅ 通过（Pillow OK）
+remove_bg.py   selftest     → ✅ 通过（u2net 模型已缓存）
+wordcount.py   selftest     → ✅ 通过（纯标准库）
+doc_convert.py selftest     → ✅ 通过
+render_card.py --selftest   → ⚠ 未通过：无法启动 chromium
+```
+
+**它接着补：** 缺的是 Chromium，执行 `playwright install chromium` 后重跑第五条即可；前四个脚本不依赖它，现在就能用。
+
+### 案例 2：商品主图适配小红书
+
+**你说：** 这张 4:3 的实拍图要发小红书，帮我改成 1080×1440，白底补边，别裁掉商品。
+
+**它做：**
+
+```bash
+python ...\image_ops.py resize -i 原图.jpg -o outputs\栖白茶杯\主图.jpg --width 1080
+python ...\image_ops.py pad    -i outputs\栖白茶杯\主图.jpg -o outputs\栖白茶杯\主图_3x4.jpg --ratio 3:4 --background "#ffffff"
+python ...\image_ops.py info   -i outputs\栖白茶杯\主图_3x4.jpg
+```
+
+**你会看到：** `✅ outputs\栖白茶杯\主图_3x4.jpg (1080x1440, 186KB)`——用 `pad` 而不是 `crop`，商品一点没被裁掉。
+
+## 常见问题 FAQ
+
+**Q1：为什么我调用别的技能时总报「找不到模块」？**
+A：公共库没装或装错位置。它必须解压到 `C:\Users\<你>\.qoder\shared\scripts\`，不是技能自己的目录下。装对之后其余五个技能才有脚本可用。
+
+**Q2：报 `RuntimeError: 找不到 Easel 项目根` 是不是坏了？**
+A：这是设计如此，不是 bug。脚本从自身位置往上逐层找第一个含 `outputs` 的目录；解法是设 `EASEL_ROOT`，或先在 `C:\Users\<你>\` 下建一个 `outputs\` 目录。
+
+**Q3：产物为什么不能直接落在 `outputs\` 根目录？**
+A：`output_paths.py` 会硬拒。主题名必须是具体名，`test`、`output`、`临时`、`主题名` 这类泛名一律拒写——目的是防止你把多个客户的素材堆成一锅，事后分不清谁是谁。
+
+**Q4：Windows 下中文输出乱码怎么办？**
+A：先执行 `set PYTHONIOENCODING=utf-8` 再跑命令。
+
+**Q5：只想用其中一个脚本，要装整包吗？**
+A：不用。六个脚本互相不 import，缺哪个补哪个。但注意：抠图要 rembg、渲染要 Chromium、GIF 要 matplotlib，依赖是各自独立的。
+
+**Q6：`--scale 2` 会不会把图放大到糊？**
+A：不会。它是以 2 倍设备像素重新渲染 HTML，文字是矢量所以放大不糊；照片素材仍受原始分辨率封顶。
+
+## 注意
+
+- **安装顺序不能颠倒**：先解压本包到 `.qoder\shared\scripts\`，再跑其余五个技能，否则一律报模块找不到。
+- `EASEL_ROOT` 没设就调用任何写盘命令，会抛 `RuntimeError: 找不到 Easel 项目根`，这是设计如此，不是 bug。
+- 产物主题名不许用 `test`、`output`、`临时` 这类泛名，`output_paths` 会直接拒绝写盘——这是为了防你把客户素材堆成一锅。
+- Windows 下如果命令输出中文乱码或报 `UnicodeEncodeError`，先执行 `set PYTHONIOENCODING=utf-8`。
+- `remove_bg.py` 的 `--model u2net` 是默认全质量档；`u2netp` 快但边缘糙，商品小图别用轻量档。
+- `render_card.py` 的 `--wait` 默认 1200ms 是等中文字体加载；机器慢、字体大时调到 2500，否则会截到没字体的骨架屏。
+- HTML 里引用的图片用相对路径时 chromium 可能取不到，稳妥做法是把图片转 base64 data URI 内嵌。
+- 本包 6 个脚本互相不 import，只缺哪个补哪个，不必整包重装。
+
+## 修复记录
+
+- 本包未改动脚本本体，zip 内容与技能原版一致；说明书由 AI灵匣整理。
+- 本包全流程实测（5 轮、2 款商品）中，公共库六个脚本累计被调用 60+ 次，均 rc=0；实测结论已写进上面「注意」一节（含 `EASEL_ROOT`、主题名白名单、`--wait` 三处真实踩坑）。
+
+━━━━━━━━━━━━━━━━━━━━━━━━ 淘宝店AI灵匣 ━━━━━━━━━━━━━━━━━━━━━━━━
+  安装：把本技能文件夹（或解压 zip）放入智能体的技能目录即可被识别。
+  用法：把需求直接说给智能体，提到相关触发词时会自动调用本技能。
+  售后：淘宝店「AI灵匣」，有问题随时联系客服。
+━━━━━━━━━━━━━━━━━━━━━━━━ 淘宝店AI灵匣 ━━━━━━━━━━━━━━━━━━━━━━━━
+【安装方式】（把 ZIP 拖进对话框，发一句话就装好）
+
+  第 1 步｜上传
+      把本文件夹里的 ecom-shared-runtime.zip 直接拖进 AI 对话框（和发图片一样），
+      不用解压、不用找文件夹、不用装任何软件。
+
+  第 2 步｜复制下面这句话，粘贴发送
+
+      「请解压并安装这个技能包：电商美工公共运行库。
+       装好后告诉我安装结果，以及之后怎么调用它。」
+
+  第 3 步｜收到「安装完成」就能用了
+      直接说「使用电商美工公共运行库」，或者干脆直接描述你的需求。
+
+  · 一次装多个：把多个 zip 一起拖进对话框，再发
+    「请把上面这些技能包全部解压安装」。
+  · 不限定哪个 AI：只要你的 AI 支持上传文件、能读写自己的
+    技能目录就能用，不绑定平台或品牌。它要是说不会装，补一句：
+    「把技能包解压后放进你的技能目录，SKILL.md 在第一层即可」。
+  · 装好后不联网也能用；带脚本的技能需要本机有 Python 3.8+。
+
+━━━━━
+

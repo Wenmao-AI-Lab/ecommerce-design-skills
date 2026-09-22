@@ -1,0 +1,335 @@
+【所属分类】08_品牌视觉体系构建
+【技能名称】设计令牌与组件规范
+【技能标识】design-system
+【功能描述】令牌架构、组件规格与演示稿生成。三层令牌（原始 → 语义 → 组件）、CSS 变量、间距与字体阶梯、组件规格、符合品牌规范的演示稿创建。用于设计令牌、系统化设计、品牌规范演示。
+
+【详细概述】
+
+
+
+# 设计令牌与组件规范
+
+> 把「主色 #FF6B35」这类口头约束，变成代码里真能引用的变量，再用校验脚本揪出硬编码。
+
+## 这个技能能做什么
+
+**核心是三层令牌架构。**这是它跟「随手定义几个 CSS 变量」的本质区别：
+
+```
+原始层 Primitive（裸值）
+      ↓
+语义层 Semantic（用途别名）
+      ↓
+组件层 Component（逐个组件专用）
+```
+
+SKILL.md 给的原文示例：
+
+```css
+/* 原始层 */
+--color-blue-600: #2563EB;
+
+/* 语义层 */
+--color-primary: var(--color-blue-600);
+
+/* 组件层 */
+--button-bg: var(--color-primary);
+```
+
+**为什么必须分三层**（SKILL.md 的 Best Practices 原话）：
+1. 组件里**永远不许出现裸 hex**，一律引用令牌
+2. **语义层让换主题成为可能**（浅色/深色切换只改语义层）
+3. **组件层让单个组件可单独定制**，不影响其它
+4. 透明度控制用 **HSL** 格式
+5. **每个令牌都要记录用途**
+6. 演示稿必须 import `design-tokens.css` 并**只用 `var()`**
+
+**组件规格的写法**（SKILL.md 的 `Component Spec Pattern` 原表）：
+
+| 属性 | 默认 | Hover | Active | Disabled |
+|---|---|---|---|---|
+| Background | primary | primary-dark | primary-darker | muted |
+| Text | white | white | white | muted-fg |
+| Border | none | none | none | muted-border |
+| Shadow | sm | md | none | none |
+
+**除了令牌，它还带一套演示稿系统**（Slides）：用令牌 + Chart.js + 一套**上下文决策系统**生成品牌合规的演示稿。决策系统由 8 份 CSV 充当知识库：
+
+| CSV | 内容 |
+|---|---|
+| `slide-strategies.csv` | 15 种稿子结构 + 情绪弧 + 火花线节拍 |
+| `slide-layouts.csv` | 25 种版式 + 组件变体 + 动效 |
+| `slide-layout-logic.csv` | 目标 → 版式 + 是否破格（break_pattern） |
+| `slide-typography.csv` | 内容类型 → 字阶 |
+| `slide-color-logic.csv` | 情绪 → 用色处理 |
+| `slide-backgrounds.csv` | 幻灯片类型 → 图片类别（Pexels / Unsplash） |
+| `slide-copy.csv` | 25 条文案公式（PAS / AIDA / FAB） |
+| `slide-charts.csv` | 25 种图表及其 Chart.js 配置 |
+
+**破格逻辑（Duarte Sparkline）**：高级稿子在两种情绪之间交替来维持注意力——`"What Is"`（挫败）↔ `"What Could Be"`（希望）——系统在 **1/3 与 2/3 位置**自动算破格点。
+
+## 什么时候用它
+
+- 要把「主色 #FF6B35」这类口头约束，变成代码里真能引用的变量
+- 需要统一的间距与字阶，避免每张图各写一套数值
+- 要把品牌规范落成组件规格，交给开发或外包执行
+- 要一套浅色/深色能一键切换的主题体系
+- 要做一份**品牌调性统一**的演示稿（不是随便套个模板）
+
+**同包内怎么选**：
+- 要 Logo、CIP 样机、图标、社媒图 → 用「全案设计流程」，这个只做令牌与规范这一层
+- 还不知道定什么调性，要先拿方向 → 先用「设计咨询与风格定调」
+
+## 需要准备什么
+
+| 材料 | 说明 | 必需 |
+|---|---|---|
+| 品牌色 / 字体 | 令牌的原始值来源 | 是（或先跑设计咨询） |
+| 目标技术栈 | Tailwind / shadcn-ui / 纯 CSS | 否（默认 Tailwind 路线） |
+| 组件清单 | 要定义哪些组件（按钮、卡片、表单…） | 否 |
+
+**环境**：`generate-tokens.cjs` 与 `validate-tokens.cjs` 是 **Node 脚本（`.cjs`）**，需要本机有 Node；`search-slides.py` 等 5 个是 Python 脚本。**本机实测环境同时具备 Node 与 Python**，两条线都能跑。
+
+**模板现成**：`templates/design-tokens-starter.json`（7184 B）就是一个填好三层结构的起始 JSON，照它改比从零写快得多。
+
+## 操作步骤
+
+### 第 1 步：从起始模板建令牌配置
+
+复制 `templates/design-tokens-starter.json`，按品牌色与字体改原始层。
+
+### 第 2 步：生成 CSS 变量
+
+```bash
+node scripts/generate-tokens.cjs --config tokens.json -o tokens.css
+```
+
+### 第 3 步：校验，把硬编码揪出来
+
+```bash
+node scripts/validate-tokens.cjs --dir src/
+```
+
+它会扫你的代码，找出**本该用 `var(--xxx)` 却写了裸 hex 或裸字体名**的地方。这一步是所有「令牌体系」能不能真落地、而不是墙上一张规范图的关键。
+
+### 第 4 步（可选）：要出演示稿时，先查决策系统
+
+```bash
+# 基础检索（自动判断域）
+python scripts/search-slides.py "investor pitch"
+
+# 指定域检索：文案 / 图表
+python scripts/search-slides.py "problem agitation" -d copy
+python scripts/search-slides.py "revenue growth" -d chart
+
+# 上下文检索（高级）：带位置与上一页情绪
+python scripts/search-slides.py "problem slide" --context --position 2 --total 9
+python scripts/search-slides.py "cta" --context --position 9 --prev-emotion frustration
+```
+
+### 第 5 步：生成演示 HTML 后校验令牌合规
+
+```bash
+python scripts/slide-token-validator.py
+```
+
+**合规的写法 vs 不合规的写法**（SKILL.md 原文对照）：
+
+```css
+/* 对 —— 用令牌 */
+background: var(--slide-bg);
+color: var(--color-primary);
+font-family: var(--typography-font-heading);
+
+/* 错 —— 硬编码 */
+background: #0D0D0D;
+color: #FF6B6B;
+font-family: 'Space Grotesk';
+```
+
+## 命令速查
+
+| 脚本 | 类型 | 用途 |
+|---|---|---|
+| `generate-tokens.cjs` | Node | 从 JSON 配置生成 CSS |
+| `validate-tokens.cjs` | Node | 检查代码里的硬编码值 |
+| `search-slides.py` | Python | BM25 检索 + 上下文推荐 |
+| `slide-token-validator.py` | Python | 校验幻灯片 HTML 的令牌合规 |
+| `fetch-background.py` | Python | 从 Pexels / Unsplash 取图 |
+
+**`generate-tokens.cjs`**
+
+| 参数 | 说明 |
+|---|---|
+| `--config` | 令牌 JSON 配置 |
+| `-o` | 输出 CSS 路径 |
+
+**`validate-tokens.cjs`**
+
+| 参数 | 说明 |
+|---|---|
+| `--dir` | 要扫描的代码目录 |
+
+**`search-slides.py`**
+
+| 参数 | 说明 |
+|---|---|
+| 位置参数 | 检索词 |
+| `-d` | 域：`copy` / `chart` / `layout` 等（不给则自动判断） |
+| `--context` | 开启上下文推荐 |
+| `--position` | 本页序号 |
+| `--total` | 总页数 |
+| `--prev-emotion` | 上一页情绪（用来算破格点） |
+
+**演示稿命令（Slash 形式，SKILL.md 原文）**：`/slides:create "10-slide investor pitch for ClaudeKit Marketing"`
+
+## 你会拿到什么
+
+- `tokens.css` —— 由 JSON 配置生成的三层 CSS 变量文件
+- 一份硬编码扫描报告 —— 代码里哪一行本该用 `var()` 却写死了
+- **组件规格表** —— 每个组件的 默认 / Hover / Active / Disabled 四态定义
+- **演示稿**（可选）—— 品牌调性统一的 HTML 演示，含 Chart.js 图表、键盘/点击/进度条导航
+- **决策依据** —— 这套稿子用了哪条结构、哪条版式、哪条文案公式（都来自 CSV 知识库，可复核）
+
+**来源文件（SKILL.md 的 `Source of Truth` 一节原表）：**
+
+| 文件 | 用途 |
+|---|---|
+| `docs/brand-guidelines.md` | 品牌识别、语气、用色 |
+| `assets/design-tokens.json` | 令牌定义（三层） |
+| `assets/design-tokens.css` | CSS 变量（演示稿里 import 它） |
+| `assets/css/slide-animations.css` | 动效库 |
+
+## 完整对话案例
+
+### 本包实测：这条线上真跑过一次，产物与一处取舍都在这里
+
+本包全流程实测（轻奢陶瓷马克杯）调用过这条线，产出一份完整设计系统提案，原文如下：
+
+```
+## Design System: Yutao Chenbai
+### Pattern
+- Name: Feature-Rich Showcase
+- CTA Placement: Above fold
+- Sections: Hero > Features > CTA
+### Style
+- Name: Liquid Glass
+- Keywords: Flowing glass, morphing, smooth transitions, fluid effects,
+  translucent, animated blur, iridescent, chromatic aberration
+- Best For: Premium SaaS, high-end e-commerce, creative platforms,
+  branding experiences, luxury portfolios
+- Performance: ⚠ Moderate-Poor | Accessibility: ⚠ Text contrast
+### Colors
+| Role | Hex |
+| Primary | #1C1917 |
+| Secondary | #44403C |
+| CTA | #CA8A04 |
+| Background | #FAFAF9 |
+| Text | #0C0A09 |
+Notes: Premium colors + minimal accent
+### Typography
+- Heading: Cormorant
+- Body: Montserrat
+- Mood: luxury, high-end, fashion, elegant, refined, premium
+- Best For: Fashion brands, luxury e-commerce, jewelry, high-end services
+- Google Fonts: fonts.google.com/share?selection.family=Cormorant:wght@400;500;600;700|Montserrat:wght@300;400;500;600;700
+### Key Effects
+Morphing elements (SVG/CSS), fluid animations (400-600ms curves),
+dynamic blur (backdrop-filter), color transitions
+### Avoid (Anti-patterns)
+- Vibrant & Block-based
+- Playful colors
+### Pre-Delivery Checklist
+- [ ] No emojis as icons (use SVG: Heroicons/Lucide)
+- [ ] cursor-pointer on all clickable elements
+- [ ] Hover states with smooth transitions (150-300ms)
+- [ ] Light mode: text contrast 4.5:1 minimum
+- [ ] Focus states visible for keyboard nav
+- [ ] prefers-reduced-motion respected
+- [ ] Responsive: 375px, 768px, 1024px, 1440px
+```
+
+**两件必须如实说的事：**
+
+**① 它自己标了风险。**推荐风格 `Liquid Glass` 后面跟着 `Performance: ⚠ Moderate-Poor`（性能较差）与 `Accessibility: ⚠ Text contrast`（文字对比有风险）。**这个自带的警示是真实存在的，本说明书照原样抄下来，不删。**任何号称「技能推荐 = 最佳方案」的说法都是不诚实的。
+
+**② 最终交付没有采用这个方向。**本包落地的是米色纸面 + 描金的中式静物体系。原因是陶瓷礼品的受众与「流动玻璃 + 动态模糊」不搭——**技能给的是有出处的候选，取舍由人做**。
+
+**但它的 `Pre-Delivery Checklist` 是真用上了的**：其中「Light mode: text contrast 4.5:1 minimum」这一条，对应到本包实测里落成的**「文字对比最小值」口径**（见交付物打分表，本项目评审记录中最差一例 **7.07:1**，高于 4.5:1 的下限）。**一条 checklist 项被真的量成了数，这就是它和「墙上一张规范图」的区别。**
+
+## 常见问题 FAQ
+
+**Q1：`.cjs` 脚本要装什么？**
+A：要本机有 **Node.js**。本机实测环境具备（Node 22.22.2），直接 `node scripts/generate-tokens.cjs ...` 即可，不需要额外 npm 包。
+
+**Q2：`validate-tokens.cjs` 是干什么的？**
+A：扫你的代码目录，找出本该用 `var(--xxx)` 却写了裸 hex / 裸字体名的地方。**它是这套体系能不能落地的关键一步**——没有它，令牌就是一份谁都不遵守的文档。
+
+**Q3：`--dir src/` 里的 `src/` 指哪？**
+A：相对于**当前工作目录**（也就是你的项目根）。脚本按项目根读写 `docs/`、`assets/`、`src/` 这类路径。
+
+**Q4：演示稿必须用 Chart.js 吗？**
+A：SKILL.md 的硬性要求是「**用 Chart.js 画图，不是纯 CSS 柱子**」。纯 CSS 柱状图在这套体系里算不合规。
+
+**Q5：演示稿必须 import `design-tokens.css` 吗？**
+A：必须。SKILL.md 把它列为「**ALL slides MUST**」的第 1 条，并且要求**只用 `var()`**、不许写裸值。
+
+**Q6：`search-slides.py` 要不要联网？**
+A：不要。它检索的是技能自带的 8 份 CSV。**只有 `fetch-background.py`（从 Pexels / Unsplash 取图）需要联网。**
+
+**Q7：`--prev-emotion` 有什么用？**
+A：用来算破格点。高级稿子要在「挫败 ↔ 希望」之间交替，系统按 1/3 与 2/3 位置自动安排破格。不传也能跑，只是少一层上下文判断。
+
+**Q8：跟同包的「全案设计流程」什么关系？**
+A：它是「全案设计流程」路由表里的同级子技能之一（`design-system`）。**本包两个都装了**，只用令牌与规范这一层时，直接调本技能更聚焦。
+
+## 注意
+
+- 脚本分两种：`generate-tokens.cjs` / `validate-tokens.cjs` 是 **Node（`.cjs`）**，其余三个是 **Python**。两条线都需要本机有对应运行时。
+- **脚本路径相对于 SKILL.md 所在目录，不是相对于项目目录**：`scripts/<file>` 是技能自己的，`../<skill>/scripts/<file>` 是同级子技能的。工作目录保持在项目根，脚本默认读写 `docs/brand-guidelines.md`、`assets/design-tokens.json`、`src/` 这类项目文件。
+- **组件里永远不许出现裸 hex**，一律引用令牌；语义层让浅色/深色切换只改一处；组件层让单个组件可单独定制。
+- **透明度控制用 HSL 格式**；每个令牌都要记录用途。
+- **演示稿的 6 条硬性要求**：① import `assets/design-tokens.css` ② 只用 `var(--xxx)` ③ 用 Chart.js 画图（不许 CSS 柱子）④ 带导航（键盘方向键、点击、进度条）⑤ 内容居中 ⑥ 以说服/转化为目标。
+- **破格点在 1/3 与 2/3 位置**（Duarte Sparkline 的 `What Is` ↔ `What Could Be` 交替），这是系统算出来的，不是随便插一页。
+- `fetch-background.py` 依赖 **Pexels / Unsplash**，需要联网与相应凭据；不使用外网图时这条线可跳过。
+- **Skill Dependencies 标注为 `brand` 与 `ui-styling`**，**这两个技能本包没有提供**。品牌识别（色调、语气）与 UI 代码落地（Tailwind / shadcn-ui 配置）这两段请另找技能；令牌层与规范层本技能自身完备。
+- 本技能作者标注为 `claudekit`（frontmatter `metadata.author`），版本 `1.0.0`，`license: MIT`。
+- 本技能没有 `EASEL-META.md`：从公共开源仓库整包收录，来源与许可记录在自带 frontmatter 里。
+
+## 修复记录
+
+- **本包未改动技能本体。** zip 内 27 个文件（`SKILL.md`、`data/` 8 份 CSV、`references/` 7 份、`scripts/` 10 个、`templates/` 1 份）与本机实测所用安装版本**逐文件 MD5 一致**。
+- **来源与许可已逐条核实（可查）**：上游仓库 `nextlevelbuilder/ui-ux-pro-max-skill`（作者 `nextlevelbuilder`，星标 **128,379**），技能内 frontmatter 明写 `license: MIT`。收录路径 `.claude/skills/design-system`，记录在 `_art2/_fills/all_manifest.json`。
+- **本包全流程实测中，本技能被实际调用，产出一份完整设计系统提案**（原文见「完整对话案例」）。它同时给出了**自带的风险标注** `Performance: ⚠ Moderate-Poor` 与 `Accessibility: ⚠ Text contrast`——本说明书**照原样保留这两条警示**，不做美化。
+- **一处真实取舍已如实记录**：技能推荐的风格方向 `Liquid Glass` 未在最终交付中采用（陶瓷礼品受众与动态模糊风格不搭）。技能给候选、人做取舍，这是正常分工；本说明书不把「技能推荐了什么」写成「最终用了什么」。
+- **一处能力被真正量化过**：它的 `Pre-Delivery Checklist` 里「Light mode: text contrast 4.5:1 minimum」这一项，对应本包落成的「文字对比最小值」口径（本项目评审记录中最差一例 7.07:1，达标）。这是该技能在本包里被**实际执行**的一段，不是只当参考文档。
+- **一处依赖边界已写进「注意」**：`Skill Dependencies: brand, ui-styling` —— **本包未提供这两个技能**，说明书明确告知买家，避免按依赖表去找时扑空。
+
+━━━━━━━━━━━━━━━━━━━━━━━━ 淘宝店AI灵匣 ━━━━━━━━━━━━━━━━━━━━━━━━
+  安装：把本技能文件夹（或解压 zip）放入智能体的技能目录即可被识别。
+  用法：把需求直接说给智能体，提到相关触发词时会自动调用本技能。
+  售后：淘宝店「AI灵匣」，有问题随时联系客服。
+━━━━━━━━━━━━━━━━━━━━━━━━ 淘宝店AI灵匣 ━━━━━━━━━━━━━━━━━━━━━━━━
+【安装方式】（把 ZIP 拖进对话框，发一句话就装好）
+
+  第 1 步｜上传
+      把本文件夹里的 design-system.zip 直接拖进 AI 对话框（和发图片一样），
+      不用解压、不用找文件夹、不用装任何软件。
+
+  第 2 步｜复制下面这句话，粘贴发送
+
+      「请解压并安装这个技能包：设计令牌与组件规范。
+       装好后告诉我安装结果，以及之后怎么调用它。」
+
+  第 3 步｜收到「安装完成」就能用了
+      直接说「使用设计令牌与组件规范」，或者干脆直接描述你的需求。
+
+  · 一次装多个：把多个 zip 一起拖进对话框，再发
+    「请把上面这些技能包全部解压安装」。
+  · 不限定哪个 AI：只要你的 AI 支持上传文件、能读写自己的
+    技能目录就能用，不绑定平台或品牌。它要是说不会装，补一句：
+    「把技能包解压后放进你的技能目录，SKILL.md 在第一层即可」。
+  · 装好后不联网也能用；带脚本的技能需要本机有 Python 3.8+。
+
+━━━━━
+
